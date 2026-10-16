@@ -1,228 +1,130 @@
-// Header.js
-// import Header from "./Header";
-// function App()
-// {
-//   return(
-//     <div>
-//       <Header/>
-//     </div>
-//   );
-// }
+import React, { useState } from "react";
+import axios from "axios";
+import { Oval } from "react-loader-spinner";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFrown } from "@fortawesome/free-solid-svg-icons";
+import "./App.css";
 
-// export default App;
+const API_URL = "https://api.openweathermap.org/data/2.5/weather";
 
+function formatDate() {
+  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "long" }).format(new Date());
+}
 
+export default function GfGWeatherApp() {
+  const [input, setInput] = useState("");
+  const [weather, setWeather] = useState({ loading: false, data: null, error: "" });
 
-// SimpleForm.js
-// import React from 'react';
-// import FormComponent from './SimpleForm';
-
-// const App = () => {
-//   return (
-//     <div>
-//       <FormComponent />
-//     </div>
-//   );
-// };
-
-// export default App;
-
-//Userlist
-// import React from 'react';
-// import UserList from './UserList';
-
-// function App() {
-//   return (
-//     <div>
-//       <UserList />
-//     </div>
-//   );
-// }
-
-// export default App;
-
-
-
-// Login Page for NSM & ETT
-// import React from 'react';
-// import './style.css';
-// import Login from './Login';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <Login />
-//     </div>
-//   );
-// }
-
-
-// export default App;
-
-// MountingMethods.js
-// import MountingMethods from './MountingMethods'; 
-// function App()
-// { 
-//   return ( 
-//   <div className="App"> 
-//     <MountingMethods></MountingMethods> 
-//   </div> ); 
-// } 
-  
-// export default App;
-
-// CounterExample.js
-// import CounterExample from './CounterExample';
-// function App()
-// {
-//   return(
-//     <>
-//       <CounterExample></CounterExample>
-//     </>
-//   );
-// }
-
-// export default App;
-
-
-
-
-// Weather App
-// Importing required components and libraries
-import { Oval } from 'react-loader-spinner'; // Importing Oval loader from react-loader-spinner
-import React, { useState } from 'react'; // Importing React and useState hook
-import axios from 'axios'; // Importing axios for making API requests
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'; // Importing FontAwesomeIcon
-import { faFrown } from '@fortawesome/free-solid-svg-icons'; // Importing faFrown icon
-import './App.css'; // Importing App.css file
-
-// Defining the GfGWeatherApp function component
-function GfGWeatherApp() {
-  // Using useState hook to store input value and weather data
-  const [input, setInput] = useState('');
-  const [weather, setWeather] = useState({
-    loading: false, // Initial loading state
-    data: {}, // Initial weather data
-    error: false, // Initial error state
-  });
-
-  // Defining a function to format the current date
-  const toDateFunction = () => {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    const WeekDays = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    const currentDate = new Date();
-    const date = `${WeekDays[currentDate.getDay()]} ${currentDate.getDate()} ${months[currentDate.getMonth()]}`;
-    return date;
-  };
-
-  // Defining a function to handle search input
   const search = async (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      setInput(''); // Clearing input field
-      setWeather({ ...weather, loading: true }); // Setting loading state to true
-      const url = 'https://api.openweathermap.org/data/2.5/weather';
-      const api_key = process.env.REACT_APP_OPENWEATHER_API_KEY;
-      await axios
-        .get(url, {
-          params: {
-            q: input, // Passing input value as query parameter
-            units: 'metric', // Setting units to metric
-            appid: api_key, // Passing API key
-          },
-        })
-        .then((res) => {
-          console.log('res', res);
-          setWeather({ data: res.data, loading: false, error: false }); // Updating weather data and setting loading state to false
-        })
-        .catch((error) => {
-          setWeather({ ...weather, data: {}, error: true }); // Updating error state
-          setInput(''); // Clearing input field
-          console.log('error', error);
-        });
+    event?.preventDefault();
+    const city = input.trim();
+    if (!city || weather.loading) return;
+    const apiKey = process.env.REACT_APP_OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      setWeather({ loading: false, data: null, error: "API key is missing. Check your local .env file." });
+      return;
+    }
+    setWeather({ loading: true, data: null, error: "" });
+    try {
+      const response = await axios.get(API_URL, { params: { q: city, units: "metric", appid: apiKey } });
+      setWeather({ loading: false, data: response.data, error: "" });
+      setInput("");
+    } catch (err) {
+      const message = err?.response?.status === 404
+        ? "We couldn't find that city. Check the spelling and try again."
+        : err?.response?.status === 401
+        ? "The weather API key was rejected. Check your OpenWeather API key."
+        : "Unable to fetch weather right now. Check your connection and try again.";
+      setWeather({ loading: false, data: null, error: message });
     }
   };
 
-  // Returning the JSX elements
+  const data = weather.data;
+  const current = data?.main;
+  const condition = data?.weather?.[0];
+  const iconUrl = condition?.icon ? `https://openweathermap.org/img/wn/${condition.icon}@2x.png` : "";
+
   return (
-    <div className="App">
-      <h1 className="app-name">Weather App</h1>
-      <div className="search-bar">
-        <input
-          type="text"
-          className="city-search"
-          placeholder="Enter City Name.."
-          name="query"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyPress={search}
-        />
-      </div>
-      {weather.loading && (
-        <>
-          <br />
-          <br />
-          <Oval type="Oval" color="black" height={100} width={100} />
-        </>
+    <main className="weather-app">
+      <header className="topbar">
+        <a className="brand" href="/" aria-label="SkyCast home" onClick={(e) => { e.preventDefault(); setWeather({ loading: false, data: null, error: "" }); setInput(""); }}>
+          <span className="brand-mark">☁</span>
+          <span className="brand-copy"><strong>SkyCast</strong><small>WEATHER PULSE</small></span>
+        </a>
+        <nav className="main-nav" aria-label="Main navigation">
+          <span className="nav-active">Overview</span>
+        </nav>
+        <span className="topbar-status"><span className="status-dot" /> LIVE WEATHER</span>
+      </header>
+
+      {!data && !weather.loading && !weather.error && (
+        <section className="welcome-layout">
+          <div className="welcome-card">
+            <div className="hero-weather-icon"><span>☀️</span><small>LIVE</small></div>
+            <span className="eyebrow">REAL-TIME WEATHER DATA</span>
+            <h1>Live Weather Forecast</h1>
+            <p className="hero-description">Enter a city to discover its weather, current conditions,<br className="desktop-break" /> and local atmospheric details.</p>
+            <form className="search-form" onSubmit={search}>
+              <label className="sr-only" htmlFor="city-search">Search city</label>
+              <span className="search-symbol" aria-hidden="true">⌕</span>
+              <input id="city-search" type="text" placeholder="Search city (e.g., Ahmedabad, London...)" value={input} onChange={(event) => setInput(event.target.value)} autoComplete="off" />
+              <button type="submit" disabled={!input.trim()}>Check weather <span aria-hidden="true">➜</span></button>
+            </form>
+            <div className="popular-cities">
+              <span>POPULAR CITIES</span>
+              {["Ahmedabad", "Mumbai", "Jaipur", "Delhi", "London"].map((city) => <button key={city} type="button" onClick={() => setInput(city)}>{city}</button>)}
+            </div>
+          </div>
+          <div className="feature-grid">
+            <article className="feature-card"><span className="feature-icon">◉</span><small>HIGH PRECISION</small><h2>Accurate Real-Time Data</h2><p>Current conditions delivered from live weather observations.</p></article>
+            <article className="feature-card"><span className="feature-icon">◈</span><small>GLOBAL COVERAGE</small><h2>Worldwide Cities</h2><p>Search cities around the world and view their latest conditions.</p></article>
+            <article className="feature-card"><span className="feature-icon">▣</span><small>ATMOSPHERIC DATA</small><h2>Detailed Metrics</h2><p>Explore temperature, humidity, pressure and wind speed.</p></article>
+          </div>
+          <div className="welcome-note"><span>ⓘ</span> Ready when you are. Search a city above to get started.</div>
+        </section>
       )}
-      {weather.error && (
-        <>
-          <br />
-          <br />
-          <span className="error-message">
-            <FontAwesomeIcon icon={faFrown} />
-            <span style={{ fontSize: '20px' }}>City not found</span>
-          </span>
-        </>
+
+      {weather.loading && <section className="message-panel" aria-live="polite"><Oval color="#0877a8" height={58} width={58} /><h2>Fetching live weather...</h2><p>Getting the latest conditions for {input || "your city"}.</p></section>}
+
+      {weather.error && !weather.loading && (
+        <section className="message-panel error-panel" role="alert">
+          <FontAwesomeIcon icon={faFrown} /><h2>We couldn't load that weather</h2><p>{weather.error}</p>
+          <form className="search-form compact-search" onSubmit={search}>
+            <label className="sr-only" htmlFor="city-search-error">Search city</label>
+            <input id="city-search-error" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Try another city..." />
+            <button type="submit" disabled={!input.trim()}>Try again</button>
+          </form>
+        </section>
       )}
-      {weather && weather.data && weather.data.main && (
-        <div>
-          <div className="city-name">
-            <h2>
-              {weather.data.name}, <span>{weather.data.sys.country}</span>
-            </h2>
+
+      {data && current && condition && (
+        <section className="dashboard">
+          <form className="search-form result-search" onSubmit={search}>
+            <label className="sr-only" htmlFor="city-search-result">Search another city</label>
+            <input id="city-search-result" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Search another city..." />
+            <button type="submit" disabled={!input.trim()}>Search <span aria-hidden="true">➜</span></button>
+          </form>
+          <div className="dashboard-heading">
+            <div><span className="eyebrow">CURRENT CONDITIONS</span><h1>{data.name}, <span>{data.sys?.country}</span></h1><p>{formatDate()}</p></div>
+            <span className="live-pill"><span className="status-dot" /> LIVE OBSERVATION</span>
           </div>
-          <div className="date">
-            <span>{toDateFunction()}</span>
+          <div className="dashboard-grid">
+            <article className="temperature-card">
+              <div className="temperature-top"><span>NOW IN {data.name.toUpperCase()}</span><span className="unit-pill">°C</span></div>
+              <div className="temperature-main">{iconUrl && <img src={iconUrl} alt={condition.description || "Weather icon"} />}<div className="temperature-value">{Math.round(current.temp)}<span>°C</span></div></div>
+              <div className="condition-label">{condition.description}</div>
+              <div className="temperature-details"><span>Feels like<b>{Math.round(current.feels_like ?? current.temp)}°C</b></span><span>Humidity<b>{current.humidity}%</b></span><span>Pressure<b>{current.pressure} hPa</b></span></div>
+            </article>
+            <article className="metric-card"><div className="metric-heading"><span>WIND SPEED</span><span className="metric-icon">↗</span></div><div className="metric-value">{data.wind?.speed ?? "—"} <small>m/s</small></div><p>Current wind speed</p><div className="metric-bar"><span style={{ width: `${Math.min((data.wind?.speed ?? 0) / 20 * 100, 100)}%` }} /></div></article>
+            <article className="metric-card"><div className="metric-heading"><span>RELATIVE HUMIDITY</span><span className="metric-icon">◉</span></div><div className="metric-value">{current.humidity ?? "—"} <small>%</small></div><p>Moisture in the air</p><div className="metric-bar"><span style={{ width: `${current.humidity ?? 0}%` }} /></div></article>
+            <article className="metric-card"><div className="metric-heading"><span>FEELS LIKE</span><span className="metric-icon">♨</span></div><div className="metric-value">{Math.round(current.feels_like ?? current.temp)} <small>°C</small></div><p>Perceived temperature</p><div className="metric-bar"><span style={{ width: `${Math.min(Math.max(((current.feels_like ?? current.temp) + 10) / 55 * 100, 0), 100)}%` }} /></div></article>
+            <article className="metric-card"><div className="metric-heading"><span>BAROMETRIC PRESSURE</span><span className="metric-icon">＋</span></div><div className="metric-value">{current.pressure ?? "—"} <small>hPa</small></div><p>Atmospheric pressure</p><div className="metric-bar"><span style={{ width: `${Math.min((current.pressure ?? 0) / 1200 * 100, 100)}%` }} /></div></article>
           </div>
-          <div className="icon-temp">
-            <img
-              className=""
-              src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
-              alt={weather.data.weather[0].description}
-            />
-            {Math.round(weather.data.main.temp)}
-            <sup className="deg">°C</sup>
-          </div>
-          <div className="des-wind">
-            <p>{weather.data.weather[0].description.toUpperCase()}</p>
-            <p>Wind Speed: {weather.data.wind.speed}m/s</p>
-          </div>
-        </div>
+          <section className="hourly-placeholder"><div className="hourly-title"><div><span className="eyebrow">FORECAST</span><h2>Plan your next hours</h2></div><span className="forecast-tag">Current data only</span></div><p>Your current-weather API returns present conditions, not an hourly forecast. We can add a forecast endpoint later if you want hourly cards.</p></section>
+        </section>
       )}
-    </div>
+
+      <footer className="footer"><span><strong>SkyCast</strong> · Precision Weather</span><span>Powered by OpenWeather</span></footer>
+    </main>
   );
 }
-
-export default GfGWeatherApp;
