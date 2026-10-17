@@ -120,8 +120,7 @@ export default function GfGWeatherApp() {
             <article className="metric-card"><div className="metric-heading"><span>FEELS LIKE</span><span className="metric-icon">♨</span></div><div className="metric-value">{Math.round(current.feels_like ?? current.temp)} <small>°C</small></div><p>Perceived temperature</p><div className="metric-bar"><span style={{ width: `${Math.min(Math.max(((current.feels_like ?? current.temp) + 10) / 55 * 100, 0), 100)}%` }} /></div></article>
             <article className="metric-card"><div className="metric-heading"><span>BAROMETRIC PRESSURE</span><span className="metric-icon">＋</span></div><div className="metric-value">{current.pressure ?? "—"} <small>hPa</small></div><p>Atmospheric pressure</p><div className="metric-bar"><span style={{ width: `${Math.min((current.pressure ?? 0) / 1200 * 100, 100)}%` }} /></div></article>
           </div>
-          <section className="hourly-placeholder"><div className="hourly-title"><div><span className="eyebrow">FORECAST</span><h2>Plan your next hours</h2></div><span className="forecast-tag">Current data only</span></div><p>Your current-weather API returns present conditions, not an hourly forecast. We can add a forecast endpoint later if you want hourly cards.</p></section>
-        </section>
+         </section>
       )}
 
       <footer className="footer"><span><strong>SkyCast</strong> · Precision Weather</span><span>Powered by OpenWeather</span></footer>
